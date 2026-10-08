@@ -1,0 +1,18 @@
+{
+  "name": "pomo-study",
+  "version": "1.0.0",
+  "private": true,
+  "description": "番茄学习管家 - 本地学习计时与看板 APP（Capacitor 安卓壳）",
+  "scripts": {
+    "sync": "cap sync android",
+    "build": "cap sync android && cd android && ./gradlew assembleDebug --no-daemon",
+    "open": "cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/core": "^6.1.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2"
+  }
+}

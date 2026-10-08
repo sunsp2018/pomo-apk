@@ -1,0 +1,9 @@
+{
+  "appId": "com.family.pomostudy",
+  "appName": "番茄学习管家",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {}
+}

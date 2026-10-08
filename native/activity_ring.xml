@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="#eb5757"
+    android:padding="32dp">
+    <TextView
+        android:id="@+id/ring_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="\u65f6\u95f4\u5230"
+        android:textSize="30sp"
+        android:textStyle="bold"
+        android:textColor="#ffffff" />
+    <TextView
+        android:id="@+id/ring_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:textSize="18sp"
+        android:textColor="#ffffff" />
+    <Button
+        android:id="@+id/ring_stop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="36dp"
+        android:minHeight="52dp"
+        android:paddingLeft="28dp"
+        android:paddingRight="28dp"
+        android:text="\u6211\u77e5\u9053\u4e86"
+        android:textSize="18sp" />
+</LinearLayout>
