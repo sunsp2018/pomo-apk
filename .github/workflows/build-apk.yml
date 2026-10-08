@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk   # GitHub runner 已预装 Android SDK
     steps:
       - uses: actions/checkout@v4
 
@@ -20,10 +22,11 @@ jobs:
           distribution: temurin
           java-version: 17      # Android 构建必须用 JDK 17
 
-      - uses: android-actions/setup-android@v3
-
       - name: Accept licenses & install SDK
-        run: yes | sdkmanager --licenses && sdkmanager "platforms;android-34" "build-tools;34.0.0"
+        run: |
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
+          yes | sdkmanager --licenses
+          sdkmanager "platforms;android-34" "build-tools;34.0.0"
 
       - name: Install Capacitor
         run: npm install
