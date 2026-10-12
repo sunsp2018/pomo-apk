@@ -1437,7 +1437,23 @@ document.getElementById("rangeSel").value=state.range;
 document.getElementById("cmpChk").checked=state.compare;
 
 /* ---------- data mgmt ---------- */
-function exportData(){var blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="番茄学习数据_"+today()+".json";a.click();toast("已导出备份");}
+function exportData(){
+  var json=JSON.stringify(state,null,2);
+  var fname="番茄学习数据_"+today()+".json";
+  var Fs=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Filesystem;
+  if(Fs){
+    Fs.writeFile({path:fname,data:json,directory:"Downloads"}).then(function(){
+      toast("已保存到「下载」文件夹："+fname);
+    }).catch(function(e){
+      blobDownload(json,fname);
+      toast("原生保存不可用，已改用浏览器下载");
+    });
+  } else {
+    blobDownload(json,fname);
+    toast("已导出备份");
+  }
+}
+function blobDownload(json,fname){var blob=new Blob([json],{type:"application/json"});var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=fname;a.click();}
 function importData(){var f=document.getElementById("fileInput");f.value="";f.click();}
 document.getElementById("fileInput").onchange=function(){
   var f=this.files[0];if(!f)return;var rd=new FileReader();
