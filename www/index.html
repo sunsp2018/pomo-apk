@@ -734,17 +734,17 @@ function periodLabel(period){
 function renderPlanManage(){
   var el=document.getElementById("planManage");if(!el)return;
   var plans=state.plans||[];
-  var html='<div class="sub" style="margin:14px 0 8px">这里可以<b>任意增删、改名、改频率、改奖励</b>学习计划。孩子完成或补卡会自动发悦币，无需手动。<br>· <b>周期</b>＝完成窗口天数，可自由填（如 3＝每3天、30＝每月），也可从下拉选常用档。<br>· <b>匹配名</b>＝计时器里打的任务名（逗号分隔多个别名）。孩子用计时器做、且任务名含这里任一别名，就自动记一次，不用手点。留空则按计划名匹配。</div>';
+  var html='<div class="sub" style="margin:14px 0 8px">这里可以<b>任意增删、改名、改频率、改奖励</b>学习计划。孩子完成或补卡会自动发悦币，无需手动。<br>· <b>周期</b>＝完成窗口，从下拉选择常用档（每天 / 每1-2天 / 每3天 / 每周 / 每2周 / 每月）。<br>· <b>匹配名</b>＝计时器里打的任务名（逗号分隔多个别名）。孩子用计时器做、且任务名含这里任一别名，就自动记一次，不用手点。留空则按计划名匹配。</div>';
   html+='<div class="plan-edit-head"><span>计划 / 匹配名</span><span>分类</span><span>周期(天)</span><span>次数</span><span>悦币</span><span>启用</span><span></span></div>';
-  html+='<datalist id="periodOpts"><option value="1">每天</option><option value="2">每1-2天</option><option value="3">每3天</option><option value="7">每周</option><option value="14">每2周</option><option value="30">每月</option></datalist>';
+  html+='<datalist id="periodOpts" style="display:none"><option value="1">每天</option><option value="2">每1-2天</option><option value="3">每3天</option><option value="7">每周</option><option value="14">每2周</option><option value="30">每月</option></datalist>';
   plans.forEach(function(p,i){
     html+='<div class="plan-edit-row" data-i="'+i+'">'
       +'<div class="pe-namewrap"><input type="text" class="pe-name" data-i="'+i+'" value="'+esc(p.name)+'" placeholder="计划名"><input type="text" class="pe-match" data-i="'+i+'" value="'+esc(p.match==null?p.name:p.match)+'" placeholder="别名(可选,逗号分隔)"></div>'
       +'<select class="pe-cat" data-i="'+i+'">'+PLAN_CATS.map(function(c){return '<option value="'+c+'"'+(c===p.cat?' selected':'')+'>'+c+'</option>';}).join('')+'</select>'
-      +'<div class="pe-periodwrap"><input type="number" class="pe-period" data-i="'+i+'" list="periodOpts" min="1" max="365" value="'+p.period+'"><span class="pe-freqhint">'+periodLabel(p.period)+'</span></div>'
+      +'<select class="pe-period" data-i="'+i+'">'+[1,2,3,7,14,30].map(function(d){return '<option value="'+d+'"'+(d===p.period?' selected':'')+'>'+periodLabel(d)+'</option>';}).join('')+'</select>'
       +'<input type="number" class="pe-min" data-i="'+i+'" min="1" max="20" value="'+p.min+'">'
       +'<input type="number" class="pe-coin" data-i="'+i+'" min="0" max="50" value="'+(p.coin||3)+'">'
-      +'<input type="checkbox" class="pe-off" data-i="'+i+'"'+(p.off?' checked':'')+'>'
+      +'<input type="checkbox" class="pe-off" data-i="'+i+'"'+((!p.off)?' checked':'')+'>'
       +'<button class="pe-del" data-i="'+i+'">删</button>'
       +'</div>';
   });
@@ -753,10 +753,10 @@ function renderPlanManage(){
   el.querySelectorAll(".pe-name").forEach(function(b){b.onchange=function(){var v=b.value.trim();state.plans[+b.dataset.i].name=v||"未命名";if(!state.plans[+b.dataset.i].match)state.plans[+b.dataset.i].match=v;save();};});
   el.querySelectorAll(".pe-match").forEach(function(b){b.onchange=function(){state.plans[+b.dataset.i].match=b.value.trim();save();};});
   el.querySelectorAll(".pe-cat").forEach(function(b){b.onchange=function(){state.plans[+b.dataset.i].cat=b.value;save();};});
-  el.querySelectorAll(".pe-period").forEach(function(b){b.onchange=function(){var v=parseInt(b.value,10);if(isNaN(v)||v<1)v=1;state.plans[+b.dataset.i].period=v;save();renderPlanManage();};});
+  el.querySelectorAll(".pe-period").forEach(function(b){b.onchange=function(){var v=parseInt(b.value,10);if(isNaN(v)||v<1)v=1;state.plans[+b.dataset.i].period=v;save();};});
   el.querySelectorAll(".pe-min").forEach(function(b){b.onchange=function(){var v=parseInt(b.value,10);if(isNaN(v)||v<1)v=1;state.plans[+b.dataset.i].min=v;save();};});
   el.querySelectorAll(".pe-coin").forEach(function(b){b.onchange=function(){var v=parseInt(b.value,10);if(isNaN(v)||v<0)v=0;state.plans[+b.dataset.i].coin=v;save();};});
-  el.querySelectorAll(".pe-off").forEach(function(b){b.onchange=function(){state.plans[+b.dataset.i].off=b.checked;save();renderPlanManage();};});
+  el.querySelectorAll(".pe-off").forEach(function(b){b.onchange=function(){state.plans[+b.dataset.i].off=!b.checked;save();renderPlanManage();};});
   el.querySelectorAll(".pe-del").forEach(function(b){b.onclick=function(){if(confirm("确定删除「"+state.plans[+b.dataset.i].name+"」？已记录的历史不会删除，只是不再追踪。")){state.plans.splice(+b.dataset.i,1);save();renderPlanManage();}};});
   var add=document.getElementById("planAdd");if(add)add.onclick=function(){state.plans.push({id:"p"+Date.now(),name:"新计划",cat:"拓展",period:7,min:1,coin:3,off:false,match:""});save();renderPlanManage();};
 }
