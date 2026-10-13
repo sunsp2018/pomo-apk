@@ -426,7 +426,7 @@ td .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
 (function(){
 "use strict";
 var KEY="pomo_study_v1";
-var APP_VERSION="1.4.0"; // 每次发版更新时改这里（如 1.4.0→1.4.1），设置页会显示，便于确认装的是不是新包
+var APP_VERSION="1.4.1"; // 每次发版更新时改这里（如 1.4.0→1.4.1），设置页会显示，便于确认装的是不是新包
 
 /* ---------- date utils ---------- */
 function pad(n){return String(n).padStart(2,"0");}
@@ -486,7 +486,8 @@ var defaults={version:1,settings:{focusMin:25,shortBreakMin:5,longBreakMin:15,re
 // 复制更新本文件到同一位置、用同一浏览器/快捷方式打开，不会清空已记录的数据。
 var state=load();
 function load(){try{var raw=localStorage.getItem(KEY);if(!raw)return migrate(defaults);var s=JSON.parse(raw);return migrate(s);}catch(e){return migrate(defaults);}}
-function migrate(s){s=s||{};s.settings=Object.assign({},defaults.settings,s.settings||{});s.sessions=Array.isArray(s.sessions)?s.sessions:[];s.range=s.range||"week";s.compare=!!s.compare;s.run=s.run||null;s.rewards=Array.isArray(s.rewards)&&s.rewards.length?s.rewards:DEFAULT_REWARDS;s.redeemed=Array.isArray(s.redeemed)?s.redeemed:[];s.seenBadges=Array.isArray(s.seenBadges)?s.seenBadges:[];s.taskPresets=Array.isArray(s.taskPresets)&&s.taskPresets.length?s.taskPresets:DEFAULT_PRESETS;if(!Array.isArray(s.plans)||!s.plans.length)s.plans=DEFAULT_PLANS.map(function(p){return Object.assign({},p);});s.plans.forEach(function(p,i){if(!p.id)p.id="p"+Date.now()+"_"+i;if(p.match==null)p.match=p.name;if(typeof p.coin!=="number")p.coin=3;if(typeof p.period!=="number")p.period=7;if(typeof p.min!=="number")p.min=1;var dp=null;for(var k=0;k<DEFAULT_PLANS.length;k++){if(DEFAULT_PLANS[k].id===p.id||DEFAULT_PLANS[k].name===p.name){dp=DEFAULT_PLANS[k];break;}}if(typeof p.manual!=="boolean")p.manual=!!(dp&&dp.manual);if(typeof p.hourMin!=="number")p.hourMin=(dp&&dp.hourMin)||0;});s.planChecks=Array.isArray(s.planChecks)?s.planChecks:[];s.planCoins=typeof s.planCoins==="number"?s.planCoins:0;s.planAwards=s.planAwards&&typeof s.planAwards==="object"?s.planAwards:{};if(!s.seeded){s.seeded=true;}return s;}
+function migrate(s){s=s||{};s.settings=Object.assign({},defaults.settings,s.settings||{});s.sessions=Array.isArray(s.sessions)?s.sessions:[];s.range=s.range||"week";s.compare=!!s.compare;s.run=s.run||null;s.rewards=Array.isArray(s.rewards)&&s.rewards.length?s.rewards:DEFAULT_REWARDS;s.redeemed=Array.isArray(s.redeemed)?s.redeemed:[];s.seenBadges=Array.isArray(s.seenBadges)?s.seenBadges:[];s.taskPresets=Array.isArray(s.taskPresets)&&s.taskPresets.length?s.taskPresets:DEFAULT_PRESETS;if(!Array.isArray(s.plans)||!s.plans.length)s.plans=DEFAULT_PLANS.map(function(p){return Object.assign({},p);});s.plans.forEach(function(p,i){if(!p.id)p.id="p"+Date.now()+"_"+i;if(p.match==null)p.match=p.name;if(typeof p.coin!=="number")p.coin=3;if(typeof p.period!=="number")p.period=7;if(typeof p.min!=="number")p.min=1;var dp=null;for(var k=0;k<DEFAULT_PLANS.length;k++){if(DEFAULT_PLANS[k].id===p.id||DEFAULT_PLANS[k].name===p.name){dp=DEFAULT_PLANS[k];break;}}
+if(dp){if(dp.manual)p.manual=true;if(dp.hourMin)p.hourMin=dp.hourMin;}else{if(typeof p.manual!=="boolean")p.manual=false;if(typeof p.hourMin!=="number")p.hourMin=0;}});s.planChecks=Array.isArray(s.planChecks)?s.planChecks:[];s.planCoins=typeof s.planCoins==="number"?s.planCoins:0;s.planAwards=s.planAwards&&typeof s.planAwards==="object"?s.planAwards:{};if(!s.seeded){s.seeded=true;}return s;}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
 
 // 存储可用性检测：若浏览器不持久化 localStorage（如 HTML 查看器），弹提示
@@ -671,8 +672,7 @@ function buildPlanBtns(p,st){
   if(p.off)return '';
   // 兜底：若存储里缺标记（旧数据升级的情况），按默认计划表补回，保证按钮渲染正确
   var dp=DEFAULT_PLANS.filter(function(d){return d.id===p.id||d.name===p.name;})[0];
-  if(typeof p.manual!=="boolean"&&dp)try{p.manual=!!dp.manual;}catch(e){}
-  if(typeof p.hourMin!=="number"&&dp)try{p.hourMin=dp.hourMin||0;}catch(e){}
+  if(dp){if(dp.manual)p.manual=true;if(dp.hourMin)p.hourMin=dp.hourMin;}else{if(typeof p.manual!=="boolean")p.manual=false;if(typeof p.hourMin!=="number")p.hourMin=0;}
   var h='<div class="plan-dorow">';
   if(p.hourMin){            // 按学时计次：保留手动按钮（点需确认，且会重新计时）
     var ph=planDoneHours(p),remain=Math.ceil(Math.max(0,ph.thr-ph.acc));
@@ -754,7 +754,7 @@ function renderPlanManage(){
       +'<button class="pe-del" data-i="'+i+'">删</button>'
       +'</div>';
   });
-  html+='<button class="ghost" id="planAdd">＋ 添加计划</button>';
+  html+='<button class="ghost" id="planAdd">＋ 添加计划</button><button class="ghost" id="planFix">🔧 修复计划标记</button>';
   el.innerHTML=html;
   el.querySelectorAll(".pe-name").forEach(function(b){b.onchange=function(){var v=b.value.trim();state.plans[+b.dataset.i].name=v||"未命名";if(!state.plans[+b.dataset.i].match)state.plans[+b.dataset.i].match=v;save();};});
   el.querySelectorAll(".pe-match").forEach(function(b){b.onchange=function(){state.plans[+b.dataset.i].match=b.value.trim();save();};});
@@ -765,6 +765,7 @@ function renderPlanManage(){
   el.querySelectorAll(".pe-off").forEach(function(b){b.onchange=function(){state.plans[+b.dataset.i].off=!b.checked;save();renderPlanManage();};});
   el.querySelectorAll(".pe-del").forEach(function(b){b.onclick=function(){if(confirm("确定删除「"+state.plans[+b.dataset.i].name+"」？已记录的历史不会删除，只是不再追踪。")){state.plans.splice(+b.dataset.i,1);save();renderPlanManage();}};});
   var add=document.getElementById("planAdd");if(add)add.onclick=function(){state.plans.push({id:"p"+Date.now(),name:"新计划",cat:"拓展",period:7,min:1,coin:3,off:false,match:""});save();renderPlanManage();};
+  var fix=document.getElementById("planFix");if(fix)fix.onclick=function(){state.plans.forEach(function(p){var dp=null;for(var k=0;k<DEFAULT_PLANS.length;k++){if(DEFAULT_PLANS[k].id===p.id||DEFAULT_PLANS[k].name===p.name){dp=DEFAULT_PLANS[k];break;}}if(dp){if(dp.manual)p.manual=true;if(dp.hourMin)p.hourMin=dp.hourMin;}});save();renderPlanManage();toast("已按默认计划重新套用标记");};
 }
 
 /* ---------- charts (pure SVG) ---------- */
