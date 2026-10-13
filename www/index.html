@@ -275,6 +275,15 @@ td .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
 .plan-remind .pr-line b{color:#7a4a0a}
 .plan-remind .pr-ft{margin-top:8px;color:#a06a1e}
 .plan-note{font-size:12.5px;color:var(--muted);line-height:1.7;margin-top:10px}
+/* 确认弹窗（防误触） */
+.app-confirm{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);align-items:center;justify-content:center;z-index:9999;padding:20px}
+.ac-box{background:#fff;border-radius:18px;padding:22px 20px;max-width:330px;width:100%;box-shadow:0 12px 44px rgba(0,0,0,.32);text-align:center}
+.ac-msg{font-size:16px;line-height:1.55;color:#222;margin-bottom:20px}
+.ac-msg small{font-size:12.5px;line-height:1.5}
+.ac-btns{display:flex;gap:12px}
+.ac-btns button{flex:1;border:none;border-radius:12px;padding:13px;font-size:16px;font-weight:700;cursor:pointer}
+.ac-no{background:#eef2f5;color:#555}
+.ac-yes{background:#ffb300;color:#fff}
 /* plan edit (parent) */
 .plan-edit-head,.plan-edit-row{display:grid;grid-template-columns:1.5fr .8fr .9fr .6fr .6fr .5fr .4fr;gap:6px;align-items:center}
 .plan-edit-head{font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:600}
@@ -456,12 +465,12 @@ var BADGES=[
 var DEFAULT_PRESETS=["数学作业","语文作业","语文预习","胡小群","阅读理解一课通","百词斩","全新听力","全新阅读","文言文一课通","陈老师数学作业","每日计算","霍娜新概念课程","读书","AI英语口语对话","姜天一写作","21世纪报","writing framework"];
 // 学习计划：period=周期天数(完成窗口)，min=窗口内目标次数，coin=完成奖励悦币
 var DEFAULT_PLANS=[
-  {id:"pl_yw1",name:"阅读理解一课通",cat:"语文",period:14,min:1,coin:8,off:false},
-  {id:"pl_yw2",name:"文言文一课通",cat:"语文",period:14,min:1,coin:8,off:false},
+  {id:"pl_yw1",name:"阅读理解一课通",cat:"语文",period:14,min:1,coin:8,off:false,manual:true,hourMin:120},
+  {id:"pl_yw2",name:"文言文一课通",cat:"语文",period:14,min:1,coin:8,off:false,manual:true,hourMin:120},
   {id:"pl_yw3",name:"读书",cat:"语文",period:2,min:1,coin:3,off:false},
   {id:"pl_yw4",name:"姜天一写作",cat:"语文",period:7,min:1,coin:5,off:false,match:"姜天一写作,姜天一"},
   {id:"pl_sx1",name:"胡小群",cat:"数学",period:7,min:1,coin:6,off:false},
-  {id:"pl_sx2",name:"计算",cat:"数学",period:2,min:1,coin:3,off:false},
+  {id:"pl_sx2",name:"计算",cat:"数学",period:2,min:1,coin:3,off:false,manual:true,match:"计算,每日计算"},
   {id:"pl_en1",name:"百词斩",cat:"英语",period:1,min:1,coin:3,off:false},
   {id:"pl_en2",name:"全新听力",cat:"英语",period:2,min:1,coin:3,off:false},
   {id:"pl_en3",name:"全新阅读",cat:"英语",period:2,min:1,coin:3,off:false},
@@ -475,7 +484,7 @@ var defaults={version:1,settings:{focusMin:25,shortBreakMin:5,longBreakMin:15,re
 // 复制更新本文件到同一位置、用同一浏览器/快捷方式打开，不会清空已记录的数据。
 var state=load();
 function load(){try{var raw=localStorage.getItem(KEY);if(!raw)return migrate(defaults);var s=JSON.parse(raw);return migrate(s);}catch(e){return migrate(defaults);}}
-function migrate(s){s=s||{};s.settings=Object.assign({},defaults.settings,s.settings||{});s.sessions=Array.isArray(s.sessions)?s.sessions:[];s.range=s.range||"week";s.compare=!!s.compare;s.run=s.run||null;s.rewards=Array.isArray(s.rewards)&&s.rewards.length?s.rewards:DEFAULT_REWARDS;s.redeemed=Array.isArray(s.redeemed)?s.redeemed:[];s.seenBadges=Array.isArray(s.seenBadges)?s.seenBadges:[];s.taskPresets=Array.isArray(s.taskPresets)&&s.taskPresets.length?s.taskPresets:DEFAULT_PRESETS;if(!Array.isArray(s.plans)||!s.plans.length)s.plans=DEFAULT_PLANS.map(function(p){return Object.assign({},p);});s.plans.forEach(function(p,i){if(!p.id)p.id="p"+Date.now()+"_"+i;if(p.match==null)p.match=p.name;if(typeof p.coin!=="number")p.coin=3;if(typeof p.period!=="number")p.period=7;if(typeof p.min!=="number")p.min=1;});s.planChecks=Array.isArray(s.planChecks)?s.planChecks:[];s.planCoins=typeof s.planCoins==="number"?s.planCoins:0;s.planAwards=s.planAwards&&typeof s.planAwards==="object"?s.planAwards:{};if(!s.seeded){s.seeded=true;}return s;}
+function migrate(s){s=s||{};s.settings=Object.assign({},defaults.settings,s.settings||{});s.sessions=Array.isArray(s.sessions)?s.sessions:[];s.range=s.range||"week";s.compare=!!s.compare;s.run=s.run||null;s.rewards=Array.isArray(s.rewards)&&s.rewards.length?s.rewards:DEFAULT_REWARDS;s.redeemed=Array.isArray(s.redeemed)?s.redeemed:[];s.seenBadges=Array.isArray(s.seenBadges)?s.seenBadges:[];s.taskPresets=Array.isArray(s.taskPresets)&&s.taskPresets.length?s.taskPresets:DEFAULT_PRESETS;if(!Array.isArray(s.plans)||!s.plans.length)s.plans=DEFAULT_PLANS.map(function(p){return Object.assign({},p);});s.plans.forEach(function(p,i){if(!p.id)p.id="p"+Date.now()+"_"+i;if(p.match==null)p.match=p.name;if(typeof p.coin!=="number")p.coin=3;if(typeof p.period!=="number")p.period=7;if(typeof p.min!=="number")p.min=1;if(typeof p.manual!=="boolean")p.manual=false;if(typeof p.hourMin!=="number")p.hourMin=0;});s.planChecks=Array.isArray(s.planChecks)?s.planChecks:[];s.planCoins=typeof s.planCoins==="number"?s.planCoins:0;s.planAwards=s.planAwards&&typeof s.planAwards==="object"?s.planAwards:{};if(!s.seeded){s.seeded=true;}return s;}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
 
 // 存储可用性检测：若浏览器不持久化 localStorage（如 HTML 查看器），弹提示
@@ -560,7 +569,25 @@ function planAutoPerDay(plan){var m={};state.sessions.forEach(function(s){if(pla
 function planManualPerDay(plan){var m={};(state.planChecks||[]).forEach(function(c){if(c.pid===plan.id)m[c.date]=1;});return m;}
 function planAutoToday(plan){return (state.sessions||[]).some(function(s){return planMatch(plan,s.taskName)&&s.date===today();});}
 function planWindowStart(plan){return addDays(today(),-(plan.period-1));}
+function planWindowTs(plan){return new Date(planWindowStart(plan)+"T00:00:00").getTime();}
+// 时间线事件：m=学习分钟(自动)，x=手动完成(重置计时)
+function planEvents(plan){
+  var ev=[];
+  state.sessions.forEach(function(s){if(planMatch(plan,s.taskName))ev.push({t:new Date(s.start).getTime(),type:'m',dur:(s.durationMin||0)});});
+  (state.planChecks||[]).forEach(function(c){if(c.pid===plan.id)ev.push({t:(c.ts||Date.now()),type:'x'});});
+  ev.sort(function(a,b){return a.t-b.t||(a.type<b.type?-1:1);});
+  return ev;
+}
+// 按累计学时计次（hourMin>0 的计划才用）：每满 hourMin 分钟算1次，手动完成额外+1并清零重计
+function planDoneHours(plan){
+  var thr=plan.hourMin||0;if(!thr)return {done:0,acc:0,thr:0};
+  var ev=planEvents(plan).filter(function(e){return e.t>=planWindowTs(plan);});
+  var acc=0,done=0;
+  ev.forEach(function(e){if(e.type==='m'){acc+=e.dur;while(acc>=thr){done++;acc-=thr;}}else{done++;acc=0;}});
+  return {done:done,acc:acc,thr:thr};
+}
 function planDone(plan){
+  if(plan.hourMin){return planDoneHours(plan).done;}
   var ws=planWindowStart(plan),auto=planAutoPerDay(plan),man=planManualPerDay(plan),total=0,d=ws;
   while(diffDays(d,today())>=0){total+=Math.max(auto[d]||0,man[d]||0);d=addDays(d,1);}
   return total;
@@ -599,6 +626,7 @@ var PLAN_NUDGE=[function(n){return n+" 这两天还没做，没关系，挑个�
 var PLAN_MAKEUP=[function(n){return "补上啦！说到做到，为你骄傲 ✨";},function(n){return "太好了，"+n+" 补回来了，这股劲儿最珍贵 🌟";},function(n){return "补齐了！不完美也没关系，能补上就很棒 💪";}];
 function pickPlan(arr){return arr[Math.floor(Math.random()*arr.length)];}
 function planDesc(p){
+  if(p.hourMin)return "累计满 "+p.hourMin+" 分钟算 1 次";
   if(p.period===1)return "每天 "+p.min+" 次";
   if(p.period===2)return "每1-2天 "+p.min+" 次";
   if(p.period===7)return "每周 "+p.min+" 次";
@@ -640,14 +668,21 @@ function renderPlanRemind(){
 function buildPlanBtns(p,st){
   if(p.off)return '';
   var h='<div class="plan-dorow">';
-  if(p.min>1){
-    h+='<button class="plan-do" data-pid="'+esc(p.id)+'">✅ +1 完成</button>';
-    if(st.done>=p.min)h+='<span class="pi-met">🎉 本周已达标</span>';
-    else h+='<span class="pi-need">还差 '+(p.min-st.done)+' 次</span>';
-  }else{
-    h+='<button class="plan-do" data-pid="'+esc(p.id)+'">✅ 完成</button>';
+  if(p.hourMin){            // 按学时计次：保留手动按钮（点需确认，且会重新计时）
+    var ph=planDoneHours(p),remain=Math.max(0,ph.thr-ph.acc);
+    h+='<button class="plan-do" data-pid="'+esc(p.id)+'">✅ 手动完成</button>';
+    h+='<span class="pi-need">再学 '+remain+' 分钟算下一次</span>';
+  }else if(p.manual){       // 明确允许手动的计划：保留按钮（点需确认）
+    if(p.min>1){
+      h+='<button class="plan-do" data-pid="'+esc(p.id)+'">✅ +1 完成</button>';
+      if(st.done>=p.min)h+='<span class="pi-met">🎉 已达标</span>';
+      else h+='<span class="pi-need">还差 '+(p.min-st.done)+' 次</span>';
+    }else{
+      h+='<button class="plan-do" data-pid="'+esc(p.id)+'">✅ 完成</button>';
+    }
+    if(st.overdue)h+='<button class="plan-make" data-pid="'+esc(p.id)+'" data-off="0">↩ 补做</button>';
   }
-  if(st.overdue)h+='<button class="plan-make" data-pid="'+esc(p.id)+'" data-off="0">↩ 补做</button>';
+  // 其余计划（默认）：不显示任何手动按钮，完全由计时器自动计入
   h+='</div>';
   return h;
 }
@@ -662,7 +697,7 @@ function renderPlanSection(){
       var st=planStatus(p);
       var badge=p.off?'<span class="pbadge off">已停用</span>':st.met?'<span class="pbadge ok">✅ 达标</span>':st.overdue?'<span class="pbadge warn">⚠️ 该加油</span>':'<span class="pbadge ing">🟡 进行中</span>';
       var lastTxt=st.last?st.last:"还没做过";
-      var doneTxt="本周期 "+st.done+" / "+p.min+" 次";
+      var doneTxt=p.hourMin?("已完成 "+st.done+" 次 · 累计 "+(planDoneHours(p).acc)+"/"+p.hourMin+" 分钟"):("本周期 "+st.done+" / "+p.min+" 次");
       var gap=st.last?diffDays(st.last,today()):null;
       var gapTxt=(!st.met&&gap!=null&&gap>=1)?'<span class="pi-gap">⏳ 已 '+gap+' 天没做</span>':(gap==null&&!st.met?'<span class="pi-gap">🌱 还没开始</span>':'');
       html+='<div class="plan-item'+(p.off?' off':'')+'">'
@@ -674,10 +709,19 @@ function renderPlanSection(){
     });
     html+='</div>';
   });
-  html+='<div class="plan-note">想偷懒？其实不用手动点：用计时器做「同名任务」（如"霍娜新概念课程""百词斩""读书"）会自动计入对应计划 🔗。多次频率的项（如新概念每周2次）按钮会变成「✅ +1 完成」，点几次记几次，到量自动显示「本周已达标」。漏做的项会显示「⏳ 已 N 天没做」并给出「↩ 补做」按钮——完成或补做都会发悦币+鼓励语；没做只温柔提醒，不批评。</div>';
+  html+='<div class="plan-note">大部分计划<b>不用手动点</b>：用计时器做「同名任务」（如"霍娜新概念课程""百词斩""读书"）会自动计入对应计划 🔗。只有 <b>阅读理解一课通 / 文言文一课通 / 计算</b> 三项保留了「✅ 手动完成」按钮——点一下会先弹确认框防误触。前两项目标改为「累计学满 120 分钟算完成 1 次」，手动点完成会<b>重新计时</b>（需再学 120 分钟才算下一次）。漏做的项会显示「⏳ 已 N 天没做」并温柔提醒，不批评；保留手动按钮的项才会出现「↩ 补做」。</div>';
   el.innerHTML=html;
-  el.querySelectorAll(".plan-do").forEach(function(b){b.onclick=function(){planCheck(b.getAttribute("data-pid"),0);};});
-  el.querySelectorAll(".plan-make").forEach(function(b){b.onclick=function(){planCheck(b.getAttribute("data-pid"),parseInt(b.getAttribute("data-off")||"0",10));};});
+  el.querySelectorAll(".plan-do").forEach(function(b){b.onclick=function(){
+    var pid=b.getAttribute("data-pid");
+    var p=(state.plans||[]).filter(function(x){return x.id===pid;})[0];if(!p)return;
+    var extra=p.hourMin?("点确认后<b>会重新计时</b>，需再学 "+p.hourMin+" 分钟才算下一次"):"点确认后当天即记为已完成";
+    appConfirm('确定把「<b>'+esc(p.name)+'</b>」记一次完成吗？<br><small style="color:#888">'+extra+'</small>',function(){planCheck(pid,0);});
+  };});
+  el.querySelectorAll(".plan-make").forEach(function(b){b.onclick=function(){
+    var pid=b.getAttribute("data-pid");
+    var p=(state.plans||[]).filter(function(x){return x.id===pid;})[0];if(!p)return;
+    appConfirm('确定把「<b>'+esc(p.name)+'</b>」补做一次吗？',function(){planCheck(pid,parseInt(b.getAttribute("data-off")||"0",10));});
+  };});
 }
 function periodLabel(period){
   if(period===1)return "每天";
@@ -1485,6 +1529,16 @@ ov.onclick=function(e){if(e.target===ov)closeModal();};
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&ov.classList.contains("show"))closeModal();});
 var toastTimer=null;
 function toast(msg){var t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.classList.remove("show");},2300);}
+function appConfirm(html,cb){
+  var ov=document.getElementById("appConfirm");
+  if(!ov){ov=document.createElement("div");ov.id="appConfirm";ov.className="app-confirm";document.body.appendChild(ov);}
+  ov.innerHTML='<div class="ac-box"><div class="ac-msg">'+html+'</div><div class="ac-btns"><button class="ac-no">取消</button><button class="ac-yes">确定</button></div></div>';
+  ov.style.display="flex";
+  var yes=ov.querySelector(".ac-yes"),no=ov.querySelector(".ac-no");
+  function close(){ov.style.display="none";yes.onclick=null;no.onclick=null;}
+  yes.onclick=function(){close();if(cb)cb();};
+  no.onclick=function(){close();};
+}
 
 /* ---------- render all ---------- */
 function renderAll(){renderTimer();renderDash();renderSet();}
