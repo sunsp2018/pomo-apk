@@ -1,0 +1,5 @@
+# 由 CI 自动生成，不需提交
+android/
+node_modules/
+*.iml
+.DS_Store

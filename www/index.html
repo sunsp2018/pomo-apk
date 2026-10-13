@@ -1457,7 +1457,7 @@ function blobDownload(json,fname){var blob=new Blob([json],{type:"application/js
 function importData(){var f=document.getElementById("fileInput");f.value="";f.click();}
 document.getElementById("fileInput").onchange=function(){
   var f=this.files[0];if(!f)return;var rd=new FileReader();
-  rd.onload=function(){try{var s=JSON.parse(rd.result);if(!s||!Array.isArray(s.sessions)){toast("文件格式不对");return;}
+  rd.onload=function(){try{var s=JSON.parse(rd.result);if(!s||typeof s!=="object"||Array.isArray(s)){toast("文件格式不对");return;}
     showModal("导入数据","将用导入的文件覆盖当前全部记录，确定？","覆盖导入",function(){state=migrate(s);save();renderAll();toast("导入成功");show("dash");});
   }catch(e){toast("解析失败");}};
   rd.readAsText(f);
