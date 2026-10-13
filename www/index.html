@@ -275,6 +275,7 @@ td .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
 .plan-remind .pr-line b{color:#7a4a0a}
 .plan-remind .pr-ft{margin-top:8px;color:#a06a1e}
 .plan-note{font-size:12.5px;color:var(--muted);line-height:1.7;margin-top:10px}
+.ver-line{margin-top:14px;font-size:13px;color:var(--muted);text-align:center;opacity:.85}
 /* 确认弹窗（防误触） */
 .app-confirm{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);align-items:center;justify-content:center;z-index:9999;padding:20px}
 .ac-box{background:#fff;border-radius:18px;padding:22px 20px;max-width:330px;width:100%;box-shadow:0 12px 44px rgba(0,0,0,.32);text-align:center}
@@ -425,6 +426,7 @@ td .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
 (function(){
 "use strict";
 var KEY="pomo_study_v1";
+var APP_VERSION="1.4.0"; // 每次发版更新时改这里（如 1.4.0→1.4.1），设置页会显示，便于确认装的是不是新包
 
 /* ---------- date utils ---------- */
 function pad(n){return String(n).padStart(2,"0");}
@@ -667,6 +669,10 @@ function renderPlanRemind(){
 }
 function buildPlanBtns(p,st){
   if(p.off)return '';
+  // 兜底：若存储里缺标记（旧数据升级的情况），按默认计划表补回，保证按钮渲染正确
+  var dp=DEFAULT_PLANS.filter(function(d){return d.id===p.id||d.name===p.name;})[0];
+  if(typeof p.manual!=="boolean"&&dp)try{p.manual=!!dp.manual;}catch(e){}
+  if(typeof p.hourMin!=="number"&&dp)try{p.hourMin=dp.hourMin||0;}catch(e){}
   var h='<div class="plan-dorow">';
   if(p.hourMin){            // 按学时计次：保留手动按钮（点需确认，且会重新计时）
     var ph=planDoneHours(p),remain=Math.ceil(Math.max(0,ph.thr-ph.acc));
@@ -1328,6 +1334,7 @@ function renderSet(){
   html+='<div class="set-row"><div><div class="lab">提醒开关</div><div class="sub">开启后：专注到时间隔蜂鸣+震动+顶部红色横幅（语音播报看设备是否支持）</div></div><input type="checkbox" id="set_voice"'+(s.voice?" checked":"")+'></div>';
   html+='<div class="set-row"><div><div class="lab">专注时保持屏幕常亮</div><div class="sub">防止学习时平板自动熄屏导致提醒漏响（支持的浏览器有效；锁屏或切到别的APP时仍会释放）</div></div><input type="checkbox" id="set_keepAwake"'+(s.keepAwake?" checked":"")+'></div>';
   html+='<div class="set-row" style="flex-direction:column;align-items:stretch;gap:10px"><div><div class="lab">测试与排查</div><div class="sub">不用真等25分钟：立即试听提醒，或跑一个10秒倒计时看完整流程</div></div><div class="btn-row"><button class="ghost" id="setTestRing">🔔 立即试听提醒</button><button class="ghost" id="setTestTimer">⏱️ 10秒倒计时测试</button></div><div class="note">注意：网页在<b>屏幕关闭/后台</b>时无法可靠发声。若孩子常关屏，建议打包成手机APP（已备方案）。</div></div>';
+  html+='<div class="ver-line">番茄学习管家 · 版本 <b>'+APP_VERSION+'</b> · 数据自动保存在本机</div>';
   document.getElementById("setCard").innerHTML=html;
   rows.forEach(function(r){var el=document.getElementById("set_"+r[0]);el.onchange=function(){var v=parseInt(el.value,10);if(isNaN(v)||v<1)v=1;if(v>120)v=120;state.settings[r[0]]=v;save();};});
   var vc=document.getElementById("set_voice");vc.onchange=function(){state.settings.voice=vc.checked;save();};
