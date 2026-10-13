@@ -484,7 +484,7 @@ var defaults={version:1,settings:{focusMin:25,shortBreakMin:5,longBreakMin:15,re
 // 复制更新本文件到同一位置、用同一浏览器/快捷方式打开，不会清空已记录的数据。
 var state=load();
 function load(){try{var raw=localStorage.getItem(KEY);if(!raw)return migrate(defaults);var s=JSON.parse(raw);return migrate(s);}catch(e){return migrate(defaults);}}
-function migrate(s){s=s||{};s.settings=Object.assign({},defaults.settings,s.settings||{});s.sessions=Array.isArray(s.sessions)?s.sessions:[];s.range=s.range||"week";s.compare=!!s.compare;s.run=s.run||null;s.rewards=Array.isArray(s.rewards)&&s.rewards.length?s.rewards:DEFAULT_REWARDS;s.redeemed=Array.isArray(s.redeemed)?s.redeemed:[];s.seenBadges=Array.isArray(s.seenBadges)?s.seenBadges:[];s.taskPresets=Array.isArray(s.taskPresets)&&s.taskPresets.length?s.taskPresets:DEFAULT_PRESETS;if(!Array.isArray(s.plans)||!s.plans.length)s.plans=DEFAULT_PLANS.map(function(p){return Object.assign({},p);});s.plans.forEach(function(p,i){if(!p.id)p.id="p"+Date.now()+"_"+i;if(p.match==null)p.match=p.name;if(typeof p.coin!=="number")p.coin=3;if(typeof p.period!=="number")p.period=7;if(typeof p.min!=="number")p.min=1;if(typeof p.manual!=="boolean")p.manual=false;if(typeof p.hourMin!=="number")p.hourMin=0;});s.planChecks=Array.isArray(s.planChecks)?s.planChecks:[];s.planCoins=typeof s.planCoins==="number"?s.planCoins:0;s.planAwards=s.planAwards&&typeof s.planAwards==="object"?s.planAwards:{};if(!s.seeded){s.seeded=true;}return s;}
+function migrate(s){s=s||{};s.settings=Object.assign({},defaults.settings,s.settings||{});s.sessions=Array.isArray(s.sessions)?s.sessions:[];s.range=s.range||"week";s.compare=!!s.compare;s.run=s.run||null;s.rewards=Array.isArray(s.rewards)&&s.rewards.length?s.rewards:DEFAULT_REWARDS;s.redeemed=Array.isArray(s.redeemed)?s.redeemed:[];s.seenBadges=Array.isArray(s.seenBadges)?s.seenBadges:[];s.taskPresets=Array.isArray(s.taskPresets)&&s.taskPresets.length?s.taskPresets:DEFAULT_PRESETS;if(!Array.isArray(s.plans)||!s.plans.length)s.plans=DEFAULT_PLANS.map(function(p){return Object.assign({},p);});s.plans.forEach(function(p,i){if(!p.id)p.id="p"+Date.now()+"_"+i;if(p.match==null)p.match=p.name;if(typeof p.coin!=="number")p.coin=3;if(typeof p.period!=="number")p.period=7;if(typeof p.min!=="number")p.min=1;var dp=null;for(var k=0;k<DEFAULT_PLANS.length;k++){if(DEFAULT_PLANS[k].id===p.id||DEFAULT_PLANS[k].name===p.name){dp=DEFAULT_PLANS[k];break;}}if(typeof p.manual!=="boolean")p.manual=!!(dp&&dp.manual);if(typeof p.hourMin!=="number")p.hourMin=(dp&&dp.hourMin)||0;});s.planChecks=Array.isArray(s.planChecks)?s.planChecks:[];s.planCoins=typeof s.planCoins==="number"?s.planCoins:0;s.planAwards=s.planAwards&&typeof s.planAwards==="object"?s.planAwards:{};if(!s.seeded){s.seeded=true;}return s;}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
 
 // 存储可用性检测：若浏览器不持久化 localStorage（如 HTML 查看器），弹提示
@@ -669,7 +669,7 @@ function buildPlanBtns(p,st){
   if(p.off)return '';
   var h='<div class="plan-dorow">';
   if(p.hourMin){            // 按学时计次：保留手动按钮（点需确认，且会重新计时）
-    var ph=planDoneHours(p),remain=Math.max(0,ph.thr-ph.acc);
+    var ph=planDoneHours(p),remain=Math.ceil(Math.max(0,ph.thr-ph.acc));
     h+='<button class="plan-do" data-pid="'+esc(p.id)+'">✅ 手动完成</button>';
     h+='<span class="pi-need">再学 '+remain+' 分钟算下一次</span>';
   }else if(p.manual){       // 明确允许手动的计划：保留按钮（点需确认）
@@ -697,7 +697,7 @@ function renderPlanSection(){
       var st=planStatus(p);
       var badge=p.off?'<span class="pbadge off">已停用</span>':st.met?'<span class="pbadge ok">✅ 达标</span>':st.overdue?'<span class="pbadge warn">⚠️ 该加油</span>':'<span class="pbadge ing">🟡 进行中</span>';
       var lastTxt=st.last?st.last:"还没做过";
-      var doneTxt=p.hourMin?("已完成 "+st.done+" 次 · 累计 "+(planDoneHours(p).acc)+"/"+p.hourMin+" 分钟"):("本周期 "+st.done+" / "+p.min+" 次");
+      var doneTxt=p.hourMin?("已完成 "+st.done+" 次 · 累计 "+Math.round(planDoneHours(p).acc)+"/"+p.hourMin+" 分钟"):("本周期 "+st.done+" / "+p.min+" 次");
       var gap=st.last?diffDays(st.last,today()):null;
       var gapTxt=(!st.met&&gap!=null&&gap>=1)?'<span class="pi-gap">⏳ 已 '+gap+' 天没做</span>':(gap==null&&!st.met?'<span class="pi-gap">🌱 还没开始</span>':'');
       html+='<div class="plan-item'+(p.off?' off':'')+'">'
