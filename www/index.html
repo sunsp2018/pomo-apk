@@ -426,7 +426,7 @@ td .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
 (function(){
 "use strict";
 var KEY="pomo_study_v1";
-var APP_VERSION="1.4.2"; // 每次发版更新时改这里（如 1.4.0→1.4.1），设置页会显示，便于确认装的是不是新包
+var APP_VERSION="1.4.3"; // 每次发版更新时改这里（如 1.4.0→1.4.1），设置页会显示，便于确认装的是不是新包
 
 /* ---------- date utils ---------- */
 function pad(n){return String(n).padStart(2,"0");}
@@ -1210,7 +1210,7 @@ function renderDash(){
     kpi(fmtMin(total),"本期专注总时长","")+
     kpi(fmtMin(avg),"日均专注","o")+
     kpi(pomo+" 个","完成番茄数","")+
-    kpi((dailyTotals(today(),today())[today()]||0),"今日专注","g")+
+    kpi(fmtMin(dailyTotals(today(),today())[today()]||0),"今日专注","g")+
     kpi(Object.keys(taskTotals(a,b)).length+" 项","涉及任务","")+
     kpi(cmpDelta(prevTotal,total),"对比上期",prevTotal>total?"w":"g");
 
