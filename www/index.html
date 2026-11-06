@@ -110,6 +110,17 @@ button.big{display:block;width:100%;max-width:360px;margin:0 auto}
 .goal-card-top .gt{font-size:15px;font-weight:700}
 .goal-card-top .gs{font-size:12.5px;color:var(--text-2);margin-top:2px}
 .goal-card-top .gv{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--focus-2)}
+.goal-split{display:flex;gap:14px;margin:2px 0 12px;font-size:13px}
+.goal-split .gs-hw{color:#2f80ed}
+.goal-split .gs-ot{color:#27ae60}
+.hw-toggle{display:flex;align-items:center;gap:7px;margin:10px 2px 2px;font-size:14px;color:var(--text-2);cursor:pointer;user-select:none}
+.hw-toggle input{width:17px;height:17px;accent-color:var(--focus-2)}
+.hw-nums{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:10px;font-size:14px}
+.hw-nums .hw-a{color:#2f80ed;font-weight:700}
+.hw-nums .hw-b{color:#27ae60;font-weight:700}
+.hw-nums .hw-t{color:var(--text-2)}
+.hw-bar{height:14px;border-radius:999px;background:#e3ecf7;overflow:hidden;display:flex}
+.hw-bar .hw-fill{background:linear-gradient(90deg,#2f80ed,#56ccf2);height:100%}
 .row-btns{display:flex;flex-direction:column;gap:10px;max-width:360px;margin:0 auto}
 /* charts */
 .chart{display:block;width:100%;height:auto}
@@ -353,6 +364,8 @@ td .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
 
     <div class="card" id="goalCard" style="border-color:var(--focus-soft)"></div>
 
+    <div class="card" id="hwCard"></div>
+
     <div class="card" id="rewardCard"></div>
 
     <div class="sec-head"><h2>📋 学习计划完成度</h2><button class="mini-btn" id="goPlanManage">⚙ 管理 / 添加计划</button></div>
@@ -426,7 +439,7 @@ td .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
 (function(){
 "use strict";
 var KEY="pomo_study_v1";
-var APP_VERSION="1.4.3"; // 每次发版更新时改这里（如 1.4.0→1.4.1），设置页会显示，便于确认装的是不是新包
+var APP_VERSION="1.4.4"; // 每次发版更新时改这里（如 1.4.0→1.4.1），设置页会显示，便于确认装的是不是新包
 
 /* ---------- date utils ---------- */
 function pad(n){return String(n).padStart(2,"0");}
@@ -486,7 +499,7 @@ var defaults={version:1,settings:{focusMin:25,shortBreakMin:5,longBreakMin:15,re
 // 复制更新本文件到同一位置、用同一浏览器/快捷方式打开，不会清空已记录的数据。
 var state=load();
 function load(){try{var raw=localStorage.getItem(KEY);if(!raw)return migrate(defaults);var s=JSON.parse(raw);return migrate(s);}catch(e){return migrate(defaults);}}
-function migrate(s){s=s||{};s.settings=Object.assign({},defaults.settings,s.settings||{});s.sessions=Array.isArray(s.sessions)?s.sessions:[];s.range=s.range||"week";s.compare=!!s.compare;s.run=s.run||null;s.rewards=Array.isArray(s.rewards)&&s.rewards.length?s.rewards:DEFAULT_REWARDS;s.redeemed=Array.isArray(s.redeemed)?s.redeemed:[];s.seenBadges=Array.isArray(s.seenBadges)?s.seenBadges:[];s.taskPresets=Array.isArray(s.taskPresets)&&s.taskPresets.length?s.taskPresets:DEFAULT_PRESETS;if(!Array.isArray(s.plans)||!s.plans.length)s.plans=DEFAULT_PLANS.map(function(p){return Object.assign({},p);});s.plans.forEach(function(p,i){if(!p.id)p.id="p"+Date.now()+"_"+i;if(p.match==null)p.match=p.name;if(typeof p.coin!=="number")p.coin=3;if(typeof p.period!=="number")p.period=7;if(typeof p.min!=="number")p.min=1;var dp=null;for(var k=0;k<DEFAULT_PLANS.length;k++){if(DEFAULT_PLANS[k].id===p.id||DEFAULT_PLANS[k].name===p.name){dp=DEFAULT_PLANS[k];break;}}
+function migrate(s){s=s||{};s.settings=Object.assign({},defaults.settings,s.settings||{});s.sessions=Array.isArray(s.sessions)?s.sessions:[];s.sessions.forEach(function(x){if(typeof x.homework!=="boolean")x.homework=false;});s.range=s.range||"week";s.compare=!!s.compare;s.run=s.run||null;s.rewards=Array.isArray(s.rewards)&&s.rewards.length?s.rewards:DEFAULT_REWARDS;s.redeemed=Array.isArray(s.redeemed)?s.redeemed:[];s.seenBadges=Array.isArray(s.seenBadges)?s.seenBadges:[];s.taskPresets=Array.isArray(s.taskPresets)&&s.taskPresets.length?s.taskPresets:DEFAULT_PRESETS;if(!Array.isArray(s.plans)||!s.plans.length)s.plans=DEFAULT_PLANS.map(function(p){return Object.assign({},p);});s.plans.forEach(function(p,i){if(!p.id)p.id="p"+Date.now()+"_"+i;if(p.match==null)p.match=p.name;if(typeof p.coin!=="number")p.coin=3;if(typeof p.period!=="number")p.period=7;if(typeof p.min!=="number")p.min=1;var dp=null;for(var k=0;k<DEFAULT_PLANS.length;k++){if(DEFAULT_PLANS[k].id===p.id||DEFAULT_PLANS[k].name===p.name){dp=DEFAULT_PLANS[k];break;}}
 if(dp){if(dp.manual)p.manual=true;if(dp.hourMin)p.hourMin=dp.hourMin;}else{if(typeof p.manual!=="boolean")p.manual=false;if(typeof p.hourMin!=="number")p.hourMin=0;}});s.planChecks=Array.isArray(s.planChecks)?s.planChecks:[];s.planCoins=typeof s.planCoins==="number"?s.planCoins:0;s.planAwards=s.planAwards&&typeof s.planAwards==="object"?s.planAwards:{};if(!s.seeded){s.seeded=true;}return s;}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
 
@@ -552,6 +565,9 @@ function hourDist(a,b){
   return h;
 }
 function taskTotals(a,b){var m={};state.sessions.forEach(function(s){if(s.date>=a&&s.date<=b)m[s.taskName]=(m[s.taskName]||0)+(s.durationMin||0);});return m;}
+// 默认按任务名是否含“作业”判断是否为作业（在学校没做完带回家的）；手动开关可覆盖
+function inferHomework(name){return /作业/.test(name||"");}
+function homeworkTotals(a,b){var hw=0,other=0;state.sessions.forEach(function(s){if(s.date>=a&&s.date<=b){if(s.homework)hw+=(s.durationMin||0);else other+=(s.durationMin||0);}});return {hw:hw,other:other,total:hw+other};}
 function recentTasks(){var seen={},out=[];for(var i=state.sessions.length-1;i>=0&&out.length<6;i--){var n=state.sessions[i].taskName;if(!seen[n]){seen[n]=1;out.push(n);}}return out;}
 function todayTasks(){var m={},order=[];state.sessions.forEach(function(s){if(s.date!==today())return;if(m[s.taskName]==null){m[s.taskName]={name:s.taskName,min:0,count:0};order.push(s.taskName);}m[s.taskName].min+=(s.durationMin||0);m[s.taskName].count++;});return order.map(function(n){return m[n];});}
 
@@ -950,11 +966,17 @@ function alarm(text){
   var AC=window.AudioContext||window.webkitAudioContext;if(AC){if(!_audioCtx)_audioCtx=new AC();if(_audioCtx.state==="suspended")_audioCtx.resume();}
   buzz(true);startAlarmTune();repeatSpeak(text,4,2600);alarmBanner(text);
 }
-function alarmBanner(text){
+function alarmBanner(text,ms){
   var b=document.getElementById("alarmBanner"),t=document.getElementById("alarmText");
   if(!b||!t)return;
   t.textContent=text;b.classList.add("show");
-  clearTimeout(b._t);b._t=setTimeout(function(){b.classList.remove("show");stopAlarmTune();},15000);
+  clearTimeout(b._t);b._t=setTimeout(function(){b.classList.remove("show");stopAlarmTune();},ms||15000);
+}
+// 轻提醒（到点后每隔一段时间的一次简短提示）：横幅≤10秒、短蜂鸣、单次语音，不再放长旋律，避免一直吵
+function nudge(text){
+  if(!state.settings.voice)return;
+  if(NATIVE_ALARM){alarmBanner(text,10000);return;}
+  buzz();beep(2);speak(text);alarmBanner(text,10000);
 }
 // 原生闹钟桥接：仅在打包成的 APP 内、且原生 Alarm 插件存在时生效；否则全部走网页提醒
 var NATIVE_ALARM=!!(window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Alarm);
@@ -992,10 +1014,11 @@ function focusActiveMs(run,now){
   var end=run.paused?run.pauseStartTs:now;
   return end-run.startTs-(run.pausedTotalMs||0);
 }
-function startSession(name){
+function startSession(name,hw){
   if(!name||!name.trim()){toast("先输入学习任务名称");return;}
+  if(typeof hw!=="boolean")hw=inferHomework(name);
   var testSec=window.__testSec||0;window.__testSec=0;
-  state.run={kind:"focus",taskName:name.trim(),startTs:Date.now(),focusRemindedAt:0,paused:false,pauseStartTs:0,pausedTotalMs:0,pauses:0,testSec:testSec};
+  state.run={kind:"focus",taskName:name.trim(),homework:hw,startTs:Date.now(),focusRemindedAt:0,paused:false,pauseStartTs:0,pausedTotalMs:0,pauses:0,testSec:testSec};
   ensureAudio();if(state.settings.voice)beep(1);
   if(state.settings.keepAwake)requestWakeLock();
   if(NATIVE_ALARM&&!testSec)nativeSchedule(state.settings.focusMin*60000,1,"学习时间到","该休息一下，起来活动活动身体");
@@ -1023,7 +1046,7 @@ function endFocus(){
   if(run.testSec){state.run=null;save();renderTimer();toast("测试结束（未记录）");return;}
   var end=Date.now();var dur=focusActiveMs(run,end)/60000;
   if(dur<0.5){toast("这次太短啦，已忽略");state.run=null;save();renderTimer();return;}
-  state.sessions.push({id:"s"+Date.now(),taskName:run.taskName,start:new Date(run.startTs).toISOString(),end:new Date(end).toISOString(),durationMin:dur,date:fmtDate(new Date(run.startTs)),pomodoro:0,pauses:run.pauses||0,pausedMin:(run.pausedTotalMs||0)/60000});
+  state.sessions.push({id:"s"+Date.now(),taskName:run.taskName,start:new Date(run.startTs).toISOString(),end:new Date(end).toISOString(),durationMin:dur,date:fmtDate(new Date(run.startTs)),pomodoro:0,pauses:run.pauses||0,pausedMin:(run.pausedTotalMs||0)/60000,homework:!!run.homework});
   var gained=Math.floor(dur/5)+1;
   var goal=state.settings.dailyGoalMin||0;
   if(goal>0){
@@ -1049,8 +1072,12 @@ function tick(){
     var sb=document.getElementById("segFill");
     if(sb){var p=Math.min(100,el/limitMs*100);sb.style.width=p+"%";var st=document.getElementById("segPct");if(st)st.textContent=Math.round(p)+"%";if(p>=100)sb.classList.add("over");}
     if(el>=limitMs){
-      if(!run.focusRemindedAt||now-run.focusRemindedAt>=state.settings.restRemindMin*60000){
+      if(!run.focusRemindedAt){
+        // 首次到时：强提醒（旋律+语音+横幅），横幅 15 秒后自动消失，不再持续打扰
         alarm("学习时间到啦，该休息一下，起来活动活动身体",3);toast("该休息啦～");run.focusRemindedAt=now;save();
+      } else if(now-run.focusRemindedAt>=state.settings.restRemindMin*60000){
+        // 之后每隔 restRemindMin（5–10 分钟）只做轻提醒：横幅≤10秒、短语音，无长旋律
+        nudge("学习时间到啦，记得休息一下哦");toast("该休息啦～");run.focusRemindedAt=now;save();
       }
     }
   }else if(run.kind==="rest"){
@@ -1072,6 +1099,7 @@ function renderTimer(){
   if(!state.run){
     var micBtn=SHOW_WEB_MIC?'<button class="mic" id="micBtn" title="语音输入">🎤</button>':'';
     html+='<div class="task-input"><input id="taskName" placeholder="输入新任务名，例如：数学作业" maxlength="20"/>'+micBtn+'</div>';
+    html+='<label class="hw-toggle"><input type="checkbox" id="hwChk"> 📚 本次是<span class="hw-word">作业</span>（在学校没做完、带回家的）</label>';
     var tt=todayTasks();
     if(tt.length){
       html+='<div class="today-tasks-title">今天已开始的任务（点一下看详情）</div>';
@@ -1127,7 +1155,8 @@ function renderTimer(){
   // bind
   var tn=document.getElementById("taskName");if(tn)tn.focus();
   var mb=document.getElementById("micBtn");if(mb)mb.onclick=startRecog;
-  var sb=document.getElementById("startBtn");if(sb)sb.onclick=function(){var v=document.getElementById("taskName").value;startSession(v);};
+  var sb=document.getElementById("startBtn");if(sb)sb.onclick=function(){var v=document.getElementById("taskName").value;var hw=document.getElementById("hwChk")?document.getElementById("hwChk").checked:false;startSession(v,hw);};
+  var hwc=document.getElementById("hwChk");if(hwc){var tni=document.getElementById("taskName");if(tni)tni.addEventListener("input",function(){hwc.checked=inferHomework(tni.value);});hwc.checked=inferHomework((document.getElementById("taskName").value||""));}
   var eb=document.getElementById("endBtn");if(eb)eb.onclick=endFocus;
   var pb=document.getElementById("pauseBtn");if(pb)pb.onclick=pauseFocus;
   var rb=document.getElementById("resumeBtn");if(rb)rb.onclick=resumeFocus;
@@ -1218,11 +1247,22 @@ function renderDash(){
 
   // today's goal progress card (always reflects today, regardless of range)
   var tMin=(dailyTotals(today(),today())[today()])||0;
+  var ht=homeworkTotals(today(),today());
   var goal=state.settings.dailyGoalMin||0;
   var pctT=goal>0?tMin/goal*100:0;
   document.getElementById("goalCard").innerHTML=
     '<div class="goal-card-top"><div><div class="gt">今日目标进度</div><div class="gs">'+(goal>0?"每日目标 "+fmtMin(goal):"在「设置」里设定每日目标")+'</div></div><div class="gv">'+fmtMin(tMin)+'</div></div>'
+    + '<div class="goal-split"><span class="gs-hw">作业 '+fmtMin(ht.hw)+'</span><span class="gs-ot">非作业 '+fmtMin(ht.other)+'</span></div>'
     + pbarHTML(pctT,null,null,goal>0?(pctT>=100?"🎉 今日目标已达成！":"还差 "+fmtMin(goal-tMin)+" 达成"):"",false);
+
+  // homework vs non-homework card (for the selected range)
+  var hwt=homeworkTotals(a,b);
+  var hwPct=hwt.total>0?hwt.hw/hwt.total*100:0;
+  document.getElementById("hwCard").innerHTML=
+    '<h3>📚 作业 vs 非作业</h3>'
+    +'<div class="hw-nums"><span class="hw-a">作业 '+fmtMin(hwt.hw)+'</span><span class="hw-b">非作业 '+fmtMin(hwt.other)+'</span><span class="hw-t">合计 '+fmtMin(hwt.total)+'</span></div>'
+    +'<div class="hw-bar"><div class="hw-fill" style="width:'+hwPct+'%"></div></div>'
+    +'<div class="note">作业＝在学校没做完、带回家的；非作业＝自主拓展/兴趣。希望作业尽量在学校完成，这里能看清“带回家做”占了多少时间。</div>';
 
   // rewards summary on dashboard (full system lives in the 奖励 page)
   var g=gameStats(),lv=computeLevel(g.xp);
@@ -1293,6 +1333,9 @@ function buildInsights(a,b,prev,prevTotal,total){
   // top task
   var tt=taskTotals(a,b);var tk=Object.keys(tt).sort(function(x,y){return tt[y]-tt[x];});
   if(tk.length)ins.push(["📚","花时间最多的任务是 <b>"+esc(tk[0])+"</b>（"+fmtMin(tt[tk[0]])+"），占比 "+(tt[tk[0]]/total*100).toFixed(0)+"%。"]);
+  // homework proportion
+  var hwt=homeworkTotals(a,b);
+  if(hwt.total>0){var ph=Math.round(hwt.hw/hwt.total*100);ins.push(["✏️","本期「作业」"+fmtMin(hwt.hw)+"（占 "+ph+"%），「非作业」"+fmtMin(hwt.other)+"。作业尽量在学校做完，带回家的越少，留给自主拓展的时间越多。"]);}
   // streak
   var streak=0,cur=today();while((dailyTotals(cur,cur)[cur]||0)>0){streak++;cur=addDays(cur,-1);}
   ins.push(["🔥","你已经连续 <b>"+streak+"</b> 天有专注记录"+(streak>0?"，保持住这个节奏！":"。")]);
@@ -1328,7 +1371,7 @@ function renderSet(){
     ["shortBreakMin","短休息（分钟）","每个番茄后的小休息，推荐 5"],
     ["longBreakMin","长休息（分钟）","每完成一组后的大休息，推荐 15"],
     ["pomPerLong","几个番茄后长休息","推荐 4"],
-    ["restRemindMin","未结束时的提醒间隔（分钟）","不点结束，每隔多久再提醒，推荐 5"],
+    ["restRemindMin","未结束时的提醒间隔（分钟）","不点结束，每隔多久轻提醒一次（建议 5–10 分钟），每次只提示约 10 秒"],
     ["dailyGoalMin","每日目标专注（分钟）","达成后进度条变蓝并显示庆祝，推荐 120（2 小时）"]
   ];
   var html=rows.map(function(r){return '<div class="set-row"><div><div class="lab">'+r[1]+'</div><div class="sub">'+r[2]+'</div></div><input type="number" min="1" max="120" id="set_'+r[0]+'" value="'+s[r[0]]+'"></div>';}).join("");
