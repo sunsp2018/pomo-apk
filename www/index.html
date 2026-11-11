@@ -113,8 +113,6 @@ button.big{display:block;width:100%;max-width:360px;margin:0 auto}
 .goal-split{display:flex;gap:14px;margin:2px 0 12px;font-size:13px}
 .goal-split .gs-hw{color:#2f80ed}
 .goal-split .gs-ot{color:#27ae60}
-.hw-toggle{display:flex;align-items:center;gap:7px;margin:10px 2px 2px;font-size:14px;color:var(--text-2);cursor:pointer;user-select:none}
-.hw-toggle input{width:17px;height:17px;accent-color:var(--focus-2)}
 .hw-nums{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:10px;font-size:14px}
 .hw-nums .hw-a{color:#2f80ed;font-weight:700}
 .hw-nums .hw-b{color:#27ae60;font-weight:700}
@@ -439,7 +437,7 @@ td .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
 (function(){
 "use strict";
 var KEY="pomo_study_v1";
-var APP_VERSION="1.4.4"; // 每次发版更新时改这里（如 1.4.0→1.4.1），设置页会显示，便于确认装的是不是新包
+var APP_VERSION="1.4.5"; // 每次发版更新时改这里（如 1.4.0→1.4.1），设置页会显示，便于确认装的是不是新包
 
 /* ---------- date utils ---------- */
 function pad(n){return String(n).padStart(2,"0");}
@@ -567,7 +565,7 @@ function hourDist(a,b){
 function taskTotals(a,b){var m={};state.sessions.forEach(function(s){if(s.date>=a&&s.date<=b)m[s.taskName]=(m[s.taskName]||0)+(s.durationMin||0);});return m;}
 // 默认按任务名是否含“作业”判断是否为作业（在学校没做完带回家的）；手动开关可覆盖
 function inferHomework(name){return /作业/.test(name||"");}
-function homeworkTotals(a,b){var hw=0,other=0;state.sessions.forEach(function(s){if(s.date>=a&&s.date<=b){if(s.homework)hw+=(s.durationMin||0);else other+=(s.durationMin||0);}});return {hw:hw,other:other,total:hw+other};}
+function homeworkTotals(a,b){var hw=0,other=0;state.sessions.forEach(function(s){if(s.date>=a&&s.date<=b){if(inferHomework(s.taskName))hw+=(s.durationMin||0);else other+=(s.durationMin||0);}});return {hw:hw,other:other,total:hw+other};}
 function recentTasks(){var seen={},out=[];for(var i=state.sessions.length-1;i>=0&&out.length<6;i--){var n=state.sessions[i].taskName;if(!seen[n]){seen[n]=1;out.push(n);}}return out;}
 function todayTasks(){var m={},order=[];state.sessions.forEach(function(s){if(s.date!==today())return;if(m[s.taskName]==null){m[s.taskName]={name:s.taskName,min:0,count:0};order.push(s.taskName);}m[s.taskName].min+=(s.durationMin||0);m[s.taskName].count++;});return order.map(function(n){return m[n];});}
 
@@ -1014,9 +1012,9 @@ function focusActiveMs(run,now){
   var end=run.paused?run.pauseStartTs:now;
   return end-run.startTs-(run.pausedTotalMs||0);
 }
-function startSession(name,hw){
+function startSession(name){
   if(!name||!name.trim()){toast("先输入学习任务名称");return;}
-  if(typeof hw!=="boolean")hw=inferHomework(name);
+  var hw=inferHomework(name);
   var testSec=window.__testSec||0;window.__testSec=0;
   state.run={kind:"focus",taskName:name.trim(),homework:hw,startTs:Date.now(),focusRemindedAt:0,paused:false,pauseStartTs:0,pausedTotalMs:0,pauses:0,testSec:testSec};
   ensureAudio();if(state.settings.voice)beep(1);
@@ -1099,7 +1097,6 @@ function renderTimer(){
   if(!state.run){
     var micBtn=SHOW_WEB_MIC?'<button class="mic" id="micBtn" title="语音输入">🎤</button>':'';
     html+='<div class="task-input"><input id="taskName" placeholder="输入新任务名，例如：数学作业" maxlength="20"/>'+micBtn+'</div>';
-    html+='<label class="hw-toggle"><input type="checkbox" id="hwChk"> 📚 本次是<span class="hw-word">作业</span>（在学校没做完、带回家的）</label>';
     var tt=todayTasks();
     if(tt.length){
       html+='<div class="today-tasks-title">今天已开始的任务（点一下看详情）</div>';
@@ -1155,8 +1152,7 @@ function renderTimer(){
   // bind
   var tn=document.getElementById("taskName");if(tn)tn.focus();
   var mb=document.getElementById("micBtn");if(mb)mb.onclick=startRecog;
-  var sb=document.getElementById("startBtn");if(sb)sb.onclick=function(){var v=document.getElementById("taskName").value;var hw=document.getElementById("hwChk")?document.getElementById("hwChk").checked:false;startSession(v,hw);};
-  var hwc=document.getElementById("hwChk");if(hwc){var tni=document.getElementById("taskName");if(tni)tni.addEventListener("input",function(){hwc.checked=inferHomework(tni.value);});hwc.checked=inferHomework((document.getElementById("taskName").value||""));}
+  var sb=document.getElementById("startBtn");if(sb)sb.onclick=function(){var v=document.getElementById("taskName").value;startSession(v);};
   var eb=document.getElementById("endBtn");if(eb)eb.onclick=endFocus;
   var pb=document.getElementById("pauseBtn");if(pb)pb.onclick=pauseFocus;
   var rb=document.getElementById("resumeBtn");if(rb)rb.onclick=resumeFocus;
